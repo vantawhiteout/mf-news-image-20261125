@@ -2,25 +2,26 @@
 
 [![make.fun - news-image-20261125](https://make.fun/badge/news-image-20261125.svg)](https://make.fun/bounty/news-image-20261125)
 [![rank](https://make.fun/badge/news-image-20261125/vantawhiteout/mf-news-image-20261125/rank.svg)](https://make.fun/bounty/news-image-20261125/leaderboard)
+[![reward](https://make.fun/badge/news-image-20261125/vantawhiteout/mf-news-image-20261125/reward.svg)](https://make.fun/bounty/news-image-20261125)
 
 # 25 November 2026, in one image
 
 `entry.png` is a dated 1000x1000 news poster for Wednesday 25 November 2026.
 The date is the largest element; eight tiles pair a pictogram with a short
 caption. All eight items were reported on 25 November 2026 by BBC, The Guardian,
-Al Jazeera or CNBC:
+Al Jazeera or Reuters:
 
 - **Tariffs** — US proposed levies on 14 partners, including China and the EU.
 - **Ukraine** — Kyiv said five military jets were hit at Savasleyka airfield.
-- **Russia** — leaked official figures show nearly 500,000 people lost in the war.
-- **Huawei** — a US jury convicted the firm of trade-secret theft.
+- **Russia** — BBC analysis of leaked records found at least 490,334 dead.
+- **Huawei** — a Brooklyn jury convicted the firm of trade-secret theft.
 - **Sudan** — RSF drone strikes killed at least 19 in Blue Nile state.
 - **Space** — Shenzhou-24 carried Pakistan's first astronaut to Tiangong.
-- **Colombia** — police freed about 20 hostages in a Cartagena supermarket.
-- **Solomon Islands** — ended its China security pact for an Australian treaty.
+- **Hormuz** — Iran's IRGC said two ships struck mines in the strait.
+- **Solomon Islands** — signed an Australian treaty as its China pact ends.
 
-Claims by a party to a conflict are attributed ("Kyiv:", "own data"). The
-source line names the four outlets checked while building the poster.
+Claims by a party to a conflict are attributed ("Kyiv:", "IRGC:"). The source
+line names the four outlets checked while building the poster.
 
 ## Running
 

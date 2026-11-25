@@ -134,22 +134,6 @@ def icon_jets(d, box):
     badge(d, xr - 74, y + 12, "5")
 
 
-def icon_heat(d, box):
-    x, y, xr, _ = box
-    d.ellipse((x + 20, y + 54, x + 122, y + 156), fill=OCEAN, outline=INK, width=3)
-    d.polygon([(x + 44, y + 72), (x + 74, y + 64), (x + 86, y + 88),
-               (x + 62, y + 104), (x + 40, y + 96)], fill=GOLD)
-    d.polygon([(x + 78, y + 112), (x + 104, y + 122), (x + 96, y + 148),
-               (x + 66, y + 142)], fill=GOLD)
-    d.rounded_rectangle((x + 144, y + 36, x + 172, y + 138), radius=13,
-                        fill=WHITE, outline=INK, width=3)
-    d.rectangle((x + 153, y + 70, x + 163, y + 138), fill=CRIMSON)
-    d.ellipse((x + 138, y + 122, x + 178, y + 162), fill=CRIMSON, outline=INK, width=3)
-    d.line([(x + 20, y + 174), (x + 72, y + 166), (xr - 12, y + 144)],
-           fill=CRIMSON, width=7, joint="curve")
-    badge(d, xr - 78, y + 4, "2°C")
-
-
 def icon_sudan(d, box):
     x, y, xr, _ = box
     d.rectangle((x + 12, y + 174, xr - 12, y + 190), fill=PALE_SAND)
@@ -199,28 +183,6 @@ def icon_space(d, box):
     fire(d, rx, y + 118, 0.55)
 
 
-def icon_colombia(d, box):
-    x, y, xr, _ = box
-    d.rectangle((x + 20, y + 86, xr - 18, y + 162), fill=WHITE, outline=INK, width=3)
-    for k in range(6):
-        bx = x + 20 + k * 25
-        d.rectangle((bx, y + 72, bx + 25, y + 88),
-                    fill=CRIMSON if k % 2 == 0 else WHITE, outline=INK, width=2)
-    d.rectangle((x + 54, y + 108, x + 82, y + 162), fill=PALE_BLUE, outline=INK, width=2)
-    d.rectangle((x + 108, y + 108, x + 136, y + 162), fill=PALE_BLUE, outline=INK, width=2)
-    for k in range(3):
-        px = x + 34 + k * 44
-        d.ellipse((px, y + 168, px + 16, y + 184), fill=GOLD, outline=INK, width=2)
-        d.line((px + 8, y + 184, px + 8, y + 200), fill=INK, width=4)
-        d.line((px + 8, y + 200, px + 1, y + 206), fill=INK, width=3)
-        d.line((px + 8, y + 200, px + 15, y + 206), fill=INK, width=3)
-    cx, cy = xr - 40, y + 42
-    d.polygon([(cx, cy - 26), (cx + 22, cy - 16), (cx + 22, cy + 8),
-               (cx, cy + 26), (cx - 22, cy + 8), (cx - 22, cy - 16)],
-              fill=OCEAN, outline=INK, width=3)
-    centred(d, cy - 12, "+", face(BOLD, 28), WHITE, cx - 22, cx + 22)
-
-
 def icon_roll(d, box):
     x, y, xr, _ = box
     d.rectangle((x + 16, y + 36, x + 100, y + 176), fill=WHITE,
@@ -236,7 +198,7 @@ def icon_roll(d, box):
             d.rounded_rectangle((cx - 13, cy + 10, cx + 13, cy + 28),
                                 radius=5, fill=OCEAN)
     d.line((x + 118, y + 170, xr - 10, y + 52), fill=CRIMSON, width=8)
-    badge(d, xr - 80, y + 8, "500K")
+    badge(d, xr - 80, y + 8, "490K")
 
 
 def icon_pacific(d, box):
@@ -261,11 +223,11 @@ def icon_pacific(d, box):
 CARDS = [
     ("TARIFFS", "14 PARTNERS", "CHINA + EU", icon_tariffs, PALE_RED),
     ("UKRAINE", "KYIV: 5 JETS", "HIT AIRFIELD", icon_jets, PALE_SAND),
-    ("RUSSIA", "OWN DATA:", "500,000 LOST", icon_roll, PALE_RED),
+    ("RUSSIA", "BBC: 490,334", "DEAD IN WAR", icon_roll, PALE_RED),
     ("HUAWEI", "US JURY GUILTY", "TRADE SECRETS", icon_huawei, PALE_BLUE),
     ("SUDAN", "RSF DRONES:", "19 KILLED", icon_sudan, PALE_SAND),
     ("SHENZHOU-24", "FIRST PAKISTANI", "ASTRONAUT", icon_space, PALE_TEAL),
-    ("COLOMBIA", "20 HOSTAGES", "FREED", icon_colombia, PALE_SAND),
+    ("HORMUZ", "IRGC: 2 SHIPS", "HIT MINES", icon_hormuz, PALE_BLUE),
     ("SOLOMON IS.", "CHINA PACT OUT", "AUSTRALIA IN", icon_pacific, PALE_TEAL),
 ]
 
@@ -293,14 +255,14 @@ def poster():
     date = "25 NOVEMBER 2026"
     d.text((24, 48), date, font=fit(d, date, DISPLAY, 100, SIDE - 48), fill=INK)
     d.rectangle((26, 164, SIDE - 26, 170), fill=CRIMSON)
-    lead = "TRADE / UKRAINE / RUSSIA / HUAWEI / SUDAN / SPACE / RESCUE / PACIFIC"
+    lead = "TRADE / UKRAINE / RUSSIA / HUAWEI / SUDAN / HORMUZ / SPACE / PACIFIC"
     d.text((26, 178), lead, font=fit(d, lead, BOLD, 21, SIDE - 52), fill=OCEAN)
     margin, gutter, w, h = 24, 10, 232, 344
     for index, entry in enumerate(CARDS):
         col, row = index % 4, index // 4
         card(d, margin + col * (w + gutter), 214 + row * (h + gutter), w, h, entry)
     d.line((26, 926, SIDE - 26, 926), fill=STEEL, width=2)
-    source = "FILED 25 NOV 2026  /  BBC  -  GUARDIAN  -  AL JAZEERA  -  CNBC"
+    source = "FILED 25 NOV 2026  /  BBC  -  GUARDIAN  -  AL JAZEERA  -  REUTERS"
     d.text((26, 938), source, font=fit(d, source, BOLD, 19, SIDE - 52), fill=INK)
     return image
 
@@ -313,7 +275,7 @@ def chunk(kind, payload):
 def write_png(image, target):
     indexed = image.quantize(colors=192, method=Image.Quantize.MEDIANCUT)
     rows = indexed.tobytes()
-    palette = bytes(indexed.getpalette()[:768])
+    palette = bytes(indexed.getpalette()[:768]).ljust(768, b"\x00")
     scan = bytearray()
     for row in range(SIDE):
         scan.append(0)

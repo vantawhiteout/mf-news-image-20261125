@@ -11,6 +11,7 @@ from pathlib import Path
 
 BITS = b"\x89PNG\r\n\x1a\n"
 CEILING = 1048576
+WIDTH = HEIGHT = 1000
 SOURCE = Path(__file__).resolve().with_name("entry.png")
 
 
@@ -21,6 +22,8 @@ def checked(blob):
     width, height, depth, colour, _, _, _ = struct.unpack(">IIBBBBB", blob[16:29])
     if not (1 <= width <= 1024 and 1 <= height <= 1024):
         raise ValueError("poster dimensions exceed 1024")
+    if (width, height) != (WIDTH, HEIGHT):
+        raise ValueError("poster is not the 1000 by 1000 artwork")
     if depth != 8 or colour != 3:
         raise ValueError("poster must be 8-bit paletted")
     at, kinds, streams, palette = 8, [], [], None
@@ -44,15 +47,21 @@ def checked(blob):
         raise ValueError("incomplete PNG stream")
     if kinds.count(b"IHDR") != 1 or kinds.count(b"IEND") != 1:
         raise ValueError("duplicate header or end")
-    if not palette or palette % 3 or palette > 768 or not streams:
+    if kinds.count(b"PLTE") != 1 or palette != 768 or not streams:
         raise ValueError("bad palette or missing image data")
     if kinds.index(b"PLTE") > kinds.index(b"IDAT"):
         raise ValueError("palette appears after image data")
     if any(kind not in (b"IHDR", b"PLTE") for kind in kinds[:kinds.index(b"IDAT")]):
         raise ValueError("unexpected chunk before the image data")
+    idat_at = [i for i, kind in enumerate(kinds) if kind == b"IDAT"]
+    if idat_at != list(range(idat_at[0], idat_at[0] + len(idat_at))):
+        raise ValueError("image data chunks are not contiguous")
     need = height * (1 + width)
     flow = zlib.decompressobj()
-    raw = flow.decompress(b"".join(streams), need + 1)
+    try:
+        raw = flow.decompress(b"".join(streams), need + 1)
+    except zlib.error as exc:
+        raise ValueError("corrupt image data") from exc
     if len(raw) != need or not flow.eof or flow.unconsumed_tail or flow.unused_data:
         raise ValueError("image data does not match the header")
     stride = width + 1
