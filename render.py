@@ -213,35 +213,41 @@ def icon_space(d, box):
     fire(d, rocket_x, y + 118, 0.55)
 
 
-def icon_venezuela(d, box):
+def icon_colombia(d, box):
+    """A supermarket storefront with hostages leaving under police guard."""
     x, y, xr, _ = box
-    d.rounded_rectangle((x + 24, y + 42, x + 138, y + 164), radius=6,
-                        fill=WHITE, outline=INK, width=4)
-    for row in range(4):
-        d.line((x + 40, y + 76 + row * 20, x + 122, y + 76 + row * 20),
-               fill=STEEL, width=3)
-    d.rectangle((x + 30, y + 98, x + 132, y + 128), fill=WHITE)
-    centred(d, y + 100, "$237.5bn",
-            fit(d, "$237.5bn", BOLD, 27, 104), INK, x + 26, x + 138)
-    d.polygon([(xr - 54, y + 42), (xr - 14, y + 42), (xr - 34, y + 10)],
-              fill=GOLD, outline=INK, width=3)
-    d.line((xr - 34, y + 44, xr - 34, y + 122), fill=INK, width=7)
-    d.polygon([(xr - 48, y + 102), (xr - 20, y + 102), (xr - 34, y + 128)],
-              fill=CRIMSON)
+    # Storefront, striped awning and glass doors.
+    d.rectangle((x + 20, y + 84, xr - 18, y + 160), fill=WHITE, outline=INK, width=3)
+    for k in range(6):
+        bx = x + 20 + k * 25
+        d.rectangle((bx, y + 70, bx + 25, y + 86),
+                    fill=CRIMSON if k % 2 == 0 else WHITE, outline=INK, width=2)
+    d.rectangle((x + 54, y + 106, x + 82, y + 160), fill=SOFT_BLUE, outline=INK, width=2)
+    d.rectangle((x + 108, y + 106, x + 136, y + 160), fill=SOFT_BLUE, outline=INK, width=2)
+    # Three freed people walking clear of the doors.
     for k in range(3):
-        d.ellipse((x + 30 + k * 28, y + 178, x + 52 + k * 28, y + 194),
-                  fill=GOLD, outline=INK, width=2)
+        px = x + 34 + k * 44
+        d.ellipse((px, y + 166, px + 16, y + 182), fill=GOLD, outline=INK, width=2)
+        d.line((px + 8, y + 182, px + 8, y + 196), fill=INK, width=4)
+        d.line((px + 8, y + 196, px + 1, y + 202), fill=INK, width=3)
+        d.line((px + 8, y + 196, px + 15, y + 202), fill=INK, width=3)
+    # Police shield: the rescue was a security operation.
+    cx, cy = xr - 40, y + 42
+    d.polygon([(cx, cy - 26), (cx + 22, cy - 16), (cx + 22, cy + 8),
+               (cx, cy + 26), (cx - 22, cy + 8), (cx - 22, cy - 16)],
+              fill=OCEAN, outline=INK, width=3)
+    centred(d, cy - 12, "+", face(BOLD, 28), WHITE, cx - 22, cx + 22)
 
 
 CARDS = [
-    ("HORMUZ", "TANKERS HIT MINES", icon_hormuz, CRIMSON, SOFT_BLUE),
-    ("UKRAINE", "DRONES HIT REFINERIES", icon_ukraine, OCEAN, SOFT_SAND),
+    ("HORMUZ", "IRGC: TANKERS HIT MINES", icon_hormuz, CRIMSON, SOFT_BLUE),
+    ("UKRAINE", "KYIV: REFINERIES HIT", icon_ukraine, OCEAN, SOFT_SAND),
     ("RAS TANURA", "HOUTHIS CLAIM HIT", icon_saudi, CRIMSON, SOFT_SAND),
-    ("US TRADE", "TARIFF PLAN; SHARES FALL", icon_trade, OCEAN, SOFT_RED),
+    ("US TRADE", "14 PARTNERS; SHARES FALL", icon_trade, OCEAN, SOFT_RED),
     ("SUDAN", "19 DEAD IN RSF STRIKES", icon_sudan, CRIMSON, SOFT_SAND),
     ("CHINA", "SHANGHAI CHIEF PROBED", icon_china, OCEAN, SOFT_BLUE),
     ("SHENZHOU-24", "FIRST PAKISTANI CREW", icon_space, CRIMSON, SOFT_TEAL),
-    ("VENEZUELA", "$237.5BN DEBT DISCLOSED", icon_venezuela, OCEAN, SOFT_SAND),
+    ("COLOMBIA", "HOSTAGES FREED", icon_colombia, OCEAN, SOFT_SAND),
 ]
 
 
@@ -268,7 +274,7 @@ def poster():
     date = "25 NOVEMBER 2026"
     d.text((24, 50), date, font=fit(d, date, DISPLAY, 96, SIDE - 48), fill=INK)
     d.rectangle((26, 160, SIDE - 26, 166), fill=CRIMSON)
-    lead = "HORMUZ MINES  /  REFINERY STRIKES  /  NEW TARIFFS  /  SPACE LAUNCH"
+    lead = "IRAN WAR  /  NEW TARIFFS  /  UKRAINE STRIKES  /  SPACE  /  SIEGE ENDS"
     d.text((26, 174), lead, font=fit(d, lead, BOLD, 21, SIDE - 52), fill=STONE)
 
     margin, gutter = 24, 10
@@ -279,7 +285,7 @@ def poster():
         card(d, margin + col * (w + gutter), 210 + row * (h + gutter), w, h, entry)
 
     d.line((26, 922, SIDE - 26, 922), fill=STONE, width=2)
-    source = "REPORTS FILED 25 NOV 2026  /  REUTERS, AP, AFP, AL JAZEERA, FT, WSJ"
+    source = "FILED 25 NOV 2026  /  REUTERS, AP, AFP, BBC, CNBC, THE GUARDIAN"
     d.text((26, 932), source, font=fit(d, source, BOLD, 19, SIDE - 52), fill=INK)
     return picture
 

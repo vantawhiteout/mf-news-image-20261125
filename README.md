@@ -2,21 +2,25 @@
 
 `entry.png` is a 1000x1000 dated poster for Wednesday 25 November 2026. The
 large date names the day; eight pictograms and short labels cover stories
-reported that day in Europe, the Middle East, Africa, Asia and the Americas:
+first reported that day across the Middle East, Europe, Africa, Asia, the
+Americas and space:
 
-- Strait of Hormuz: two oil tankers struck naval mines and caught fire.
-- Ukraine: drones hit two Russian oil refineries in the Samara region.
+- Strait of Hormuz: Iran's IRGC said two tankers hit naval mines and burned.
+- Ukraine: Kyiv reported drones hitting refineries in the Samara region.
 - Ras Tanura: the Houthis claimed a drone strike on the Saudi refinery; the
   coalition said it intercepted four drones.
-- Trade: Washington prepared tariffs on China, the EU and 14 other economies;
-  global shares fell.
+- Trade: Washington proposed tariffs on 14 partners including China and the EU;
+  world shares fell.
 - Sudan: a rights group reported 19 civilians killed in RSF drone strikes.
 - China: the Shanghai party chief was placed under investigation.
-- Space: Shenzhou-24 launched with the first Pakistani crew member on Tiangong.
-- Venezuela: the government disclosed $237.5bn of public debt.
+- Space: Shenzhou-24 took the first foreign astronaut, Pakistan's Zeeshan Ali,
+  to Tiangong.
+- Colombia: police freed the remaining hostages in a Cartagena supermarket siege.
 
 The source line credits the reporting behind those items: Reuters, AP, AFP,
-Al Jazeera, the FT and the WSJ. Disputed claims are labelled as claims.
+BBC, CNBC and The Guardian. Claims by parties to a conflict are labelled as
+claims. The artwork is generated offline by `render.py` (Pillow, build-time
+only); the graded program is standard-library Python and ships the PNG.
 
 ## Running
 
