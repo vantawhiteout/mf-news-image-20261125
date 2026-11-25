@@ -79,7 +79,7 @@ def drone(d, cx, cy, spread=40):
 def badge(d, x, y, label):
     d.rounded_rectangle((x, y, x + 62, y + 40), radius=7,
                         fill=CRIMSON, outline=INK, width=3)
-    centred(d, y + 5, label, face(BOLD, 26), WHITE, x, x + 62)
+    centred(d, y + 5, label, fit(d, label, BOLD, 26, 54), WHITE, x, x + 62)
 
 
 def icon_tariffs(d, box):
@@ -89,10 +89,8 @@ def icon_tariffs(d, box):
                     fill=WHITE, outline=INK, width=3)
         d.line((x + dx + 22, y + dy, x + dx + 22, y + dy + 36), fill=STEEL, width=2)
     badge(d, xr - 74, y + 14, "14")
-    line = [(x + 18, y + 172), (x + 62, y + 158), (x + 100, y + 166),
-            (x + 144, y + 140), (xr - 12, y + 154)]
-    d.line(line, fill=CRIMSON, width=8, joint="curve")
-    d.polygon([(xr - 30, y + 144), (xr - 8, y + 152), (xr - 18, y + 170)],
+    d.line((xr - 22, y + 118, x + 88, y + 162), fill=CRIMSON, width=8)
+    d.polygon([(x + 88, y + 162), (x + 112, y + 152), (x + 104, y + 174)],
               fill=CRIMSON)
 
 
@@ -223,15 +221,52 @@ def icon_colombia(d, box):
     centred(d, cy - 12, "+", face(BOLD, 28), WHITE, cx - 22, cx + 22)
 
 
+def icon_roll(d, box):
+    x, y, xr, _ = box
+    d.rectangle((x + 16, y + 36, x + 100, y + 176), fill=WHITE,
+                outline=INK, width=3)
+    for k in range(5):
+        d.line((x + 30, y + 58 + k * 24, x + 86, y + 58 + k * 24),
+               fill=STEEL, width=5)
+    for row in range(4):
+        for col in range(2):
+            cx = x + 136 + col * 42
+            cy = y + 56 + row * 40
+            d.ellipse((cx - 8, cy - 8, cx + 8, cy + 8), fill=OCEAN)
+            d.rounded_rectangle((cx - 13, cy + 10, cx + 13, cy + 28),
+                                radius=5, fill=OCEAN)
+    d.line((x + 118, y + 170, xr - 10, y + 52), fill=CRIMSON, width=8)
+    badge(d, xr - 80, y + 8, "500K")
+
+
+def icon_pacific(d, box):
+    x, y, xr, _ = box
+    for k in range(4):
+        d.arc((x + 8 + k * 54, y + 126, x + 56 + k * 54, y + 158),
+              180, 360, fill=OCEAN, width=4)
+    for cx, wide in ((x + 48, 72), (xr - 56, 64)):
+        d.ellipse((cx - wide / 2, y + 104, cx + wide / 2, y + 140),
+                  fill=GOLD, outline=INK, width=3)
+        d.line((cx, y + 108, cx, y + 62), fill=INK, width=5)
+        for dx in (-22, -11, 0, 11, 22):
+            d.line((cx, y + 66, cx + dx, y + 48 + abs(dx) // 4),
+                   fill=OCEAN, width=5)
+    d.rectangle((x + 88, y + 32, x + 114, y + 54), outline=INK, width=4)
+    d.rectangle((x + 126, y + 32, x + 152, y + 54), outline=INK, width=4)
+    d.line((x + 118, y + 43, x + 122, y + 43), fill=CRIMSON, width=5)
+    d.line((x + 114, y + 34, x + 122, y + 52), fill=CRIMSON, width=5)
+    d.line((x + 122, y + 34, x + 114, y + 52), fill=CRIMSON, width=5)
+
+
 CARDS = [
-    ("TARIFFS", "14 PARTNERS", "SHARES FALL", icon_tariffs, PALE_RED),
-    ("HORMUZ", "IRAN: TANKER", "HITS A MINE", icon_hormuz, PALE_BLUE),
+    ("TARIFFS", "14 PARTNERS", "CHINA + EU", icon_tariffs, PALE_RED),
     ("UKRAINE", "KYIV: 5 JETS", "HIT AIRFIELD", icon_jets, PALE_SAND),
-    ("CLIMATE", "6 DAYS OVER 2°C", "PRE-INDUSTRIAL", icon_heat, PALE_TEAL),
-    ("SUDAN", "19 DEAD IN", "RSF STRIKES", icon_sudan, PALE_SAND),
+    ("RUSSIA", "OWN DATA:", "500,000 LOST", icon_roll, PALE_RED),
     ("HUAWEI", "US JURY GUILTY", "TRADE SECRETS", icon_huawei, PALE_BLUE),
+    ("SUDAN", "RSF DRONES:", "19 KILLED", icon_sudan, PALE_SAND),
     ("SHENZHOU-24", "FIRST PAKISTANI", "ASTRONAUT", icon_space, PALE_TEAL),
-    ("COLOMBIA", "20 HOSTAGES", "RESCUED", icon_colombia, PALE_SAND),
+    ("COLOMBIA", "20 HOSTAGES", "FREED", icon_colombia, PALE_SAND),
+    ("SOLOMON IS.", "CHINA PACT OUT", "AUSTRALIA IN", icon_pacific, PALE_TEAL),
 ]
 
 
@@ -244,9 +279,9 @@ def card(draw, x, y, w, h, entry):
     draw.rounded_rectangle((x + 8, y + 204, x + w - 8, y + h - 8), radius=6, fill=INK)
     centred(draw, y + 214, title, fit(draw, title, BOLD, 36, w - 28),
             WHITE, x + 8, x + w - 8)
-    centred(draw, y + 264, upper, fit(draw, upper, BOLD, 25, w - 28),
+    centred(draw, y + 262, upper, fit(draw, upper, BOLD, 29, w - 28),
             (224, 237, 244), x + 8, x + w - 8)
-    centred(draw, y + 296, lower, fit(draw, lower, BOLD, 25, w - 28),
+    centred(draw, y + 300, lower, fit(draw, lower, BOLD, 29, w - 28),
             (224, 237, 244), x + 8, x + w - 8)
 
 
@@ -258,7 +293,7 @@ def poster():
     date = "25 NOVEMBER 2026"
     d.text((24, 48), date, font=fit(d, date, DISPLAY, 100, SIDE - 48), fill=INK)
     d.rectangle((26, 164, SIDE - 26, 170), fill=CRIMSON)
-    lead = "TARIFFS / HORMUZ / UKRAINE / HEAT / SUDAN / HUAWEI / SPACE / RESCUE"
+    lead = "TRADE / UKRAINE / RUSSIA / HUAWEI / SUDAN / SPACE / RESCUE / PACIFIC"
     d.text((26, 178), lead, font=fit(d, lead, BOLD, 21, SIDE - 52), fill=OCEAN)
     margin, gutter, w, h = 24, 10, 232, 344
     for index, entry in enumerate(CARDS):

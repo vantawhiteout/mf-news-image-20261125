@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: MIT
-"""Copy the committed 25 November 2026 news poster to the output directory."""
+"""Validate and copy the committed 25 November 2026 poster to the output dir.
+
+``python main.py --check`` validates the artwork without writing anything.
+"""
 import os
 import struct
+import sys
 import zlib
 from pathlib import Path
 
@@ -44,6 +48,8 @@ def checked(blob):
         raise ValueError("bad palette or missing image data")
     if kinds.index(b"PLTE") > kinds.index(b"IDAT"):
         raise ValueError("palette appears after image data")
+    if any(kind not in (b"IHDR", b"PLTE") for kind in kinds[:kinds.index(b"IDAT")]):
+        raise ValueError("unexpected chunk before the image data")
     need = height * (1 + width)
     flow = zlib.decompressobj()
     raw = flow.decompress(b"".join(streams), need + 1)
@@ -58,10 +64,19 @@ def checked(blob):
 
 
 def main():
+    blob = checked(SOURCE.read_bytes())
+    if "--check" in sys.argv[1:]:
+        print("poster ok:", len(blob), "bytes")
+        return
     root = (os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output").strip() or "/output"
     target = Path(root).expanduser() / "entry.png"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(checked(SOURCE.read_bytes()))
+    staging = target.with_name(target.name + ".partial")
+    try:
+        staging.write_bytes(blob)
+        os.replace(staging, target)
+    finally:
+        staging.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
