@@ -1,8 +1,7 @@
-"""Offline artwork generator for the 25 November 2026 world news poster.
+"""Offline artwork generator for the Wednesday 25 November 2026 news poster.
 
-Only this build tool needs Pillow. The graded main.py copies the PNG produced
-here and imports nothing beyond the standard library. Regenerate with:
-python render.py
+Only this build tool needs Pillow; the graded main.py copies the committed PNG
+and imports nothing beyond the standard library. Regenerate with: python render.py
 """
 from pathlib import Path
 
@@ -17,16 +16,13 @@ SUN = (226, 168, 60)
 STONE = (104, 118, 129)
 WHITE = (255, 255, 255)
 STEEL = (139, 152, 160)
+FLOOD = (120, 175, 190)
+ICE = (214, 234, 240)
 
-BOLD = (
-    r"C:\Windows\Fonts\arialbd.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-)
-DISPLAY = (
-    r"C:\Windows\Fonts\Anton-Regular.ttf",
-    r"C:\Windows\Fonts\impact.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-)
+BOLD = (r"C:\Windows\Fonts\arialbd.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+DISPLAY = (r"C:\Windows\Fonts\Anton-Regular.ttf", r"C:\Windows\Fonts\impact.ttf",
+           "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
 
 
 def face(names, points):
@@ -53,109 +49,17 @@ def centred(draw, y, words, f, colour, left, right):
     draw.text(((left + right - width) / 2, y), words, font=f, fill=colour)
 
 
-def mine(d, cx, cy, colour):
-    for angle in range(0, 360, 45):
-        import math
-        dx = math.cos(math.radians(angle)) * 17
-        dy = math.sin(math.radians(angle)) * 17
-        d.line((cx, cy, cx + dx, cy + dy), fill=colour, width=6)
-    d.ellipse((cx - 13, cy - 13, cx + 13, cy + 13), fill=colour)
-
-
-def icon_iran(d, b):
-    x, y, xr, _ = b
-    for yy in (y + 172, y + 188):
-        d.arc((x + 4, yy - 24, xr - 4, yy + 16), 0, 180, fill=OCEAN, width=5)
-    d.polygon([(x + 22, y + 146), (xr - 18, y + 146),
-               (xr - 34, y + 172), (x + 38, y + 172)], fill=INK)
-    for i in range(3):
-        cx = x + 50 + i * 46
-        d.rectangle((cx, y + 108, cx + 40, y + 144), fill=OCEAN if i != 1 else CRIMSON,
-                    outline=INK, width=3)
-    d.polygon([(x + 78, y + 108), (x + 62, y + 74), (x + 84, y + 86),
-               (x + 96, y + 48), (x + 112, y + 84), (x + 134, y + 70),
-               (x + 116, y + 108)], fill=SUN)
-    d.polygon([(x + 88, y + 104), (x + 78, y + 82), (x + 100, y + 92),
-               (x + 104, y + 68), (x + 114, y + 104)], fill=CRIMSON)
-    mine(d, x + 36, y + 184, INK)
-
-
-def icon_tariffs(d, b):
-    x, y, xr, _ = b
-    d.polygon([(x + 16, y + 158), (xr - 12, y + 158),
-               (xr - 30, y + 184), (x + 34, y + 184)], fill=INK)
-    palette = (CRIMSON, OCEAN, SUN, STEEL)
-    for i in range(4):
-        cx = x + 28 + i * 44
-        d.rectangle((cx, y + 92 + (i % 2) * 24, cx + 40, y + 116 + (i % 2) * 24),
-                    fill=palette[i], outline=INK, width=3)
-    d.polygon([(x + 20, y + 72), (xr - 20, y + 50), (xr - 20, y + 86),
-               (x + 20, y + 108)], fill=WHITE, outline=CRIMSON, width=5)
-    d.line((xr - 48, y + 118, xr - 48, y + 160), fill=CRIMSON, width=12)
-    d.polygon([(xr - 62, y + 148), (xr - 48, y + 176), (xr - 34, y + 148)],
-              fill=CRIMSON)
-
-
-def icon_markets(d, b):
-    x, y, xr, _ = b
-    d.rounded_rectangle((x + 26, y + 42, x + 116, y + 132), radius=7,
-                        fill=WHITE, outline=INK, width=5)
-    for i in range(3):
-        for j in range(3):
-            d.ellipse((x + 42 + i * 22, y + 58 + j * 22,
-                       x + 50 + i * 22, y + 66 + j * 22), fill=STEEL)
-    for k in range(4):
-        d.line((x + 36 + k * 20, y + 36, x + 36 + k * 20, y + 42), fill=INK, width=5)
-        d.line((x + 36 + k * 20, y + 132, x + 36 + k * 20, y + 138), fill=INK, width=5)
-    points = [(x + 36, y + 86), (x + 62, y + 76), (x + 88, y + 96),
-              (x + 112, y + 92), (xr - 18, y + 156)]
-    d.line(points, fill=CRIMSON, width=11, joint="curve")
-    for px, py in points[:-1]:
-        d.ellipse((px - 5, py - 5, px + 5, py + 5), fill=CRIMSON)
-
-
-def icon_energy(d, b):
-    x, y, xr, _ = b
-    d.polygon([(x + 14, y + 92), (x + 78, y + 38), (x + 142, y + 92)], fill=INK)
-    d.rectangle((x + 26, y + 92, x + 130, y + 168), fill=WHITE, outline=INK, width=5)
-    d.rectangle((x + 62, y + 112, x + 104, y + 152), fill=SUN, outline=INK, width=4)
-    d.line((x + 76, y + 122, x + 66, y + 136, x + 82, y + 136, x + 72, y + 148),
-           fill=CRIMSON, width=5)
-    for i, h in enumerate((20, 38, 58)):
-        bx = x + 148 + i * 21
-        d.rectangle((bx, y + 168 - h, bx + 16, y + 168), fill=CRIMSON,
-                    outline=INK, width=2)
-    d.line((x + 142, y + 172, xr - 8, y + 172), fill=INK, width=5)
-
-
 def icon_ukraine(d, b):
     x, y, xr, _ = b
     for i, h in enumerate((44, 70, 52)):
         bx = x + 14 + i * 52
         d.rectangle((bx, y + 160 - h, bx + 44, y + 160), fill=STEEL, outline=INK, width=3)
         d.rectangle((bx + 8, y + 174 - h, bx + 19, y + 186 - h), fill=WHITE)
-    d.line((x + 24, y + 116, x + 78, y + 88), fill=INK, width=6)
-    d.line((x + 120, y + 88, xr - 14, y + 116), fill=INK, width=6)
+    d.line((x + 20, y + 112, x + 74, y + 84), fill=INK, width=6)
+    d.line((x + 120, y + 84, xr - 14, y + 112), fill=INK, width=6)
     d.polygon([(x + 92, y + 24), (x + 66, y + 96), (x + 90, y + 96),
                (x + 78, y + 152), (x + 126, y + 78), (x + 102, y + 78)], fill=SUN)
     d.line((x + 116, y + 160, xr - 10, y + 160), fill=INK, width=5)
-
-
-def icon_space(d, b):
-    x, y, xr, _ = b
-    d.rounded_rectangle((xr - 96, y + 40, xr - 40, y + 76), radius=6,
-                        fill=STEEL, outline=INK, width=4)
-    d.rectangle((xr - 128, y + 48, xr - 100, y + 68), fill=OCEAN, outline=INK, width=3)
-    d.rectangle((xr - 36, y + 48, xr - 8, y + 68), fill=OCEAN, outline=INK, width=3)
-    d.polygon([(x + 74, y + 18), (x + 108, y + 74), (x + 108, y + 132),
-               (x + 74, y + 158), (x + 40, y + 132), (x + 40, y + 74)],
-              fill=WHITE, outline=INK, width=4)
-    d.polygon([(x + 74, y + 18), (x + 90, y + 48), (x + 58, y + 48)], fill=CRIMSON)
-    d.ellipse((x + 62, y + 70, x + 86, y + 94), fill=OCEAN, outline=INK, width=3)
-    d.polygon([(x + 40, y + 122), (x + 14, y + 158), (x + 40, y + 150)], fill=CRIMSON)
-    d.polygon([(x + 108, y + 122), (x + 134, y + 158), (x + 108, y + 150)], fill=CRIMSON)
-    d.ellipse((x + 132, y + 116, x + 186, y + 170), fill=(46, 125, 79), outline=INK, width=3)
-    d.ellipse((x + 154, y + 128, x + 166, y + 140), fill=WHITE)
 
 
 def icon_sudan(d, b):
@@ -171,34 +75,97 @@ def icon_sudan(d, b):
     for r in (18, 36):
         d.arc((xr - 70 - r, y + 134 - r, xr - 70 + r, y + 134 + r), 0, 360,
               fill=CRIMSON, width=6)
-    d.line((xr - 70, y + 134, xr - 70, y + 134), fill=CRIMSON, width=7)
+    d.ellipse((xr - 76, y + 128, xr - 64, y + 140), fill=CRIMSON)
 
 
-def icon_colombia(d, b):
+def icon_japan(d, b):
     x, y, xr, _ = b
-    d.rectangle((x + 12, y + 70, xr - 12, y + 166), fill=(230, 237, 241),
-                outline=INK, width=4)
-    d.polygon([(x + 8, y + 70), (xr - 8, y + 70), (xr - 26, y + 48),
-               (x + 26, y + 48)], fill=WHITE, outline=INK, width=4)
-    d.rectangle((x + 82, y + 96, x + 138, y + 166), fill=WHITE, outline=INK, width=3)
-    for px in (x + 42, xr - 40):
-        d.ellipse((px - 12, y + 112, px + 12, y + 136), fill=SUN, outline=INK, width=3)
-        d.rectangle((px - 10, y + 136, px + 10, y + 166), fill=OCEAN)
-    for i, colour in enumerate((CRIMSON, SUN, (44, 84, 176))):
-        d.rectangle((x + 30 + i * 56, y + 30, x + 78 + i * 56, y + 42), fill=colour)
-    d.arc((x + 132, y + 128, x + 182, y + 170), 200, 340, fill=CRIMSON, width=7)
-    d.line((x + 138, y + 142, x + 128, y + 128), fill=CRIMSON, width=7)
+    d.ellipse((x + 100, y + 26, x + 168, y + 94), fill=CRIMSON)
+    trace = [(x + 12, y + 122), (x + 46, y + 122), (x + 62, y + 88),
+             (x + 78, y + 150), (x + 94, y + 56), (x + 110, y + 138),
+             (x + 126, y + 122), (xr - 12, y + 122)]
+    d.line(trace, fill=INK, width=7, joint="curve")
+    for yy in (y + 166, y + 186):
+        d.arc((x + 16, yy - 20, xr - 16, yy + 18), 0, 180, fill=OCEAN, width=6)
+
+
+def icon_brazil(d, b):
+    x, y, xr, _ = b
+    for cx in (x + 52, x + 108, x + 164):
+        d.line((cx, y + 32, cx - 8, y + 58), fill=OCEAN, width=5)
+    d.rectangle((x + 32, y + 84, x + 116, y + 152), fill=WHITE, outline=INK, width=4)
+    d.polygon([(x + 20, y + 84), (x + 74, y + 42), (x + 128, y + 84)], fill=OCEAN)
+    d.rectangle((x + 50, y + 116, x + 74, y + 152), fill=STEEL, outline=INK, width=3)
+    d.rectangle((x + 8, y + 148, xr - 8, y + 188), fill=FLOOD)
+    d.polygon([(x + 118, y + 156), (xr - 12, y + 156), (xr - 24, y + 178),
+               (x + 106, y + 178)], fill=CRIMSON, outline=INK, width=3)
+
+
+def icon_us(d, b):
+    x, y, xr, _ = b
+    d.rectangle((x + 16, y + 138, xr - 16, y + 182), fill=WHITE, outline=INK, width=4)
+    for i in range(5):
+        cx = x + 30 + i * 33
+        d.rectangle((cx, y + 146, cx + 17, y + 172), fill=STEEL)
+    d.pieslice((x + 60, y + 66, x + 132, y + 138), 180, 360,
+               fill=STEEL, outline=INK, width=4)
+    d.rectangle((x + 56, y + 134, xr - 56, y + 142), fill=INK)
+    d.line((x + 96, y + 84, x + 96, y + 32), fill=INK, width=5)
+    d.polygon([(x + 96, y + 32), (x + 142, y + 44), (x + 96, y + 56)], fill=SUN)
+
+
+def icon_syria(d, b):
+    x, y, xr, _ = b
+    d.rectangle((x + 16, y + 108, xr - 16, y + 180), fill=WHITE, outline=INK, width=4)
+    for i in range(4):
+        cx = x + 30 + i * 34
+        d.rectangle((cx, y + 122, cx + 18, y + 168), fill=STEEL)
+    d.rectangle((x + 10, y + 96, xr - 10, y + 108), fill=INK)
+    d.line((x + 96, y + 96, x + 96, y + 34), fill=INK, width=5)
+    d.polygon([(x + 96, y + 34), (x + 146, y + 46), (x + 96, y + 58)], fill=SUN)
+    d.polygon([(x + 120, y + 132), (x + 132, y + 146), (x + 156, y + 116)],
+              fill=(46, 125, 79))
+
+
+def icon_antarctica(d, b):
+    x, y, xr, _ = b
+    d.polygon([(x + 12, y + 170), (x + 48, y + 78), (x + 82, y + 130),
+               (x + 118, y + 56), (xr - 10, y + 170)], fill=ICE, outline=OCEAN, width=4)
+    d.line((x + 118, y + 56, x + 104, y + 112, x + 138, y + 170), fill=CRIMSON, width=6)
+    d.polygon([(xr - 58, y + 30), (xr - 24, y + 88), (xr - 92, y + 88)],
+              fill=SUN, outline=INK, width=3)
+    d.line((xr - 58, y + 48, xr - 58, y + 68), fill=INK, width=5)
+    d.ellipse((xr - 61, y + 76, xr - 55, y + 82), fill=INK)
+
+
+def icon_markets(d, b):
+    x, y, xr, _ = b
+    d.rounded_rectangle((x + 26, y + 42, x + 116, y + 132), radius=7,
+                        fill=WHITE, outline=INK, width=5)
+    for i in range(3):
+        for j in range(3):
+            d.ellipse((x + 42 + i * 22, y + 58 + j * 22,
+                       x + 50 + i * 22, y + 66 + j * 22), fill=STEEL)
+    for k in range(4):
+        d.line((x + 36 + k * 20, y + 36, x + 36 + k * 20, y + 42), fill=INK, width=5)
+        d.line((x + 36 + k * 20, y + 132, x + 36 + k * 20, y + 138), fill=INK, width=5)
+    points = [(x + 36, y + 142), (x + 62, y + 122), (x + 88, y + 130),
+              (x + 112, y + 90), (xr - 18, y + 58)]
+    d.line(points, fill=CRIMSON, width=11, joint="curve")
+    for px, py in points[:-1]:
+        d.ellipse((px - 5, py - 5, px + 5, py + 5), fill=CRIMSON)
+    d.polygon([(xr - 32, y + 62), (xr - 12, y + 50), (xr - 16, y + 74)], fill=CRIMSON)
 
 
 CARDS = [
-    ("IRAN WAR", "TANKER HIT BY MINE", icon_iran, CRIMSON, (250, 232, 228)),
-    ("US TARIFF PLAN", "CHINA AND EU NAMED", icon_tariffs, OCEAN, (229, 240, 241)),
-    ("AI SELL-OFF", "ASIA MARKETS DIVE", icon_markets, CRIMSON, (249, 235, 231)),
-    ("UK ENERGY", "BILLS +26% IN JAN", icon_energy, OCEAN, (252, 240, 219)),
-    ("UKRAINE", "5 DEAD, POWER CUT", icon_ukraine, CRIMSON, (231, 238, 244)),
-    ("SHENZHOU-24", "PAKISTAN IN ORBIT", icon_space, OCEAN, (229, 240, 240)),
-    ("SUDAN DRONES", "AT LEAST 19 DEAD", icon_sudan, CRIMSON, (251, 238, 226)),
-    ("COLOMBIA", "HOSTAGES FREED", icon_colombia, OCEAN, (232, 241, 245)),
+    ("UKRAINE", "GRID HIT: 5 REGIONS", icon_ukraine, CRIMSON, (231, 238, 244)),
+    ("SUDAN", "BLUE NILE: 19 DEAD", icon_sudan, OCEAN, (251, 238, 226)),
+    ("JAPAN", "M6.8 QUAKE, ALERT", icon_japan, CRIMSON, (229, 240, 241)),
+    ("BRAZIL", "3,000 FLEE FLOODS", icon_brazil, OCEAN, (232, 241, 245)),
+    ("US BUDGET", "SENATE PASSES BILL", icon_us, CRIMSON, (252, 240, 219)),
+    ("SYRIA", "CABINET SWORN IN", icon_syria, OCEAN, (229, 240, 240)),
+    ("ANTARCTICA", "ICE SHELF CRACKS", icon_antarctica, CRIMSON, (231, 238, 244)),
+    ("MARKETS", "ASIA SHARES REBOUND", icon_markets, OCEAN, (249, 235, 231)),
 ]
 
 
@@ -225,9 +192,8 @@ def poster():
     date = "25 NOVEMBER 2026"
     d.text((26, 48), date, font=fit(d, date, DISPLAY, 98, SIDE - 52), fill=INK)
     d.rectangle((28, 168, SIDE - 28, 173), fill=CRIMSON)
-    d.text((28, 180), "IRAN WAR LEADS A DAY OF MARKETS AND TARIFFS",
-           font=fit(d, "IRAN WAR LEADS A DAY OF MARKETS AND TARIFFS", BOLD, 23, SIDE - 56),
-           fill=STONE)
+    lead = "QUAKE, FLOODS, BUDGET VOTE, MARKETS RISE"
+    d.text((28, 180), lead, font=fit(d, lead, BOLD, 23, SIDE - 56), fill=STONE)
 
     margin, gutter = 26, 12
     w = (SIDE - 2 * margin - 3 * gutter) // 4
@@ -237,9 +203,8 @@ def poster():
         card(d, margin + col * (w + gutter), 212 + row * (h + gutter), w, h, entry)
 
     d.line((28, 944, SIDE - 28, 944), fill=STONE, width=2)
-    d.text((28, 952), "REPORTS FILED 25 NOV 2026  /  BBC  /  AL JAZEERA  /  REUTERS",
-           font=fit(d, "REPORTS FILED 25 NOV 2026  /  BBC  /  AL JAZEERA  /  REUTERS",
-                    BOLD, 20, SIDE - 56), fill=INK)
+    source = "REPORTS FILED 25 NOV 2026  /  GLOBAL WIRE SERVICES  /  LOCAL MEDIA"
+    d.text((28, 952), source, font=fit(d, source, BOLD, 20, SIDE - 56), fill=INK)
     return picture
 
 
