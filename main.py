@@ -1,64 +1,59 @@
 # SPDX-License-Identifier: MIT
-"""Copy the committed 25 November 2026 world-news poster to the output path."""
+"""Copy the committed 25 November 2026 news poster to the output directory."""
 import os
 import struct
 import zlib
 from pathlib import Path
 
-MAX_BYTES = 1048576
-MAX_SIDE = 1024
-SIGNATURE = b"\x89PNG\r\n\x1a\n"
+BITS = b"\x89PNG\r\n\x1a\n"
+CEILING = 1048576
 SOURCE = Path(__file__).resolve().with_name("entry.png")
 
 
-def load_poster(source):
-    """Return the committed PNG only when it is a whole, capped 8-bit image."""
-    blob = source.read_bytes()
-    if not 33 <= len(blob) <= MAX_BYTES or not blob.startswith(SIGNATURE):
+def checked(blob):
+    """Only copy a complete, capped, 8-bit paletted PNG."""
+    if not 33 <= len(blob) <= CEILING or not blob.startswith(BITS):
         raise ValueError("poster is not a small PNG")
     width, height, depth, colour, _, _, _ = struct.unpack(">IIBBBBB", blob[16:29])
-    if not (1 <= width <= MAX_SIDE and 1 <= height <= MAX_SIDE):
-        raise ValueError("poster dimensions exceed the cap")
-    if (depth, colour) != (8, 3):
-        raise ValueError("poster must be an 8-bit paletted image")
-    position, kinds, compressed, palette, ending = 8, [], [], None, None
-    while position < len(blob):
-        if len(blob) - position < 12:
-            raise ValueError("trailing bytes after the PNG stream")
-        length = struct.unpack(">I", blob[position:position + 4])[0]
-        end = position + 12 + length
-        if end > len(blob):
+    if not (1 <= width <= 1024 and 1 <= height <= 1024):
+        raise ValueError("poster dimensions exceed 1024")
+    if depth != 8 or colour != 3:
+        raise ValueError("poster must be 8-bit paletted")
+    at, kinds, streams, palette = 8, [], [], None
+    while at < len(blob):
+        if len(blob) - at < 12:
+            raise ValueError("bytes after the PNG stream")
+        size = struct.unpack(">I", blob[at:at + 4])[0]
+        stop = at + 12 + size
+        if stop > len(blob):
             raise ValueError("truncated PNG chunk")
-        kind = blob[position + 4:position + 8]
-        checksum = struct.unpack(">I", blob[end - 4:end])[0]
-        if zlib.crc32(blob[position + 4:end - 4]) != checksum:
+        kind = blob[at + 4:at + 8]
+        if zlib.crc32(kind + blob[at + 8:stop - 4]) != struct.unpack(">I", blob[stop - 4:stop])[0]:
             raise ValueError("PNG checksum mismatch")
         kinds.append(kind)
-        if kind == b"IDAT":
-            compressed.append(blob[position + 8:end - 4])
-        elif kind == b"PLTE":
-            palette = length
-        elif kind == b"IEND":
-            ending = length
-        position = end
-    if position != len(blob) or kinds[0] != b"IHDR" or kinds[-1] != b"IEND":
+        if kind == b"PLTE":
+            palette = size
+        elif kind == b"IDAT":
+            streams.append(blob[at + 8:stop - 4])
+        at = stop
+    if at != len(blob) or kinds[0] != b"IHDR" or kinds[-1] != b"IEND":
         raise ValueError("incomplete PNG stream")
     if kinds.count(b"IHDR") != 1 or kinds.count(b"IEND") != 1:
-        raise ValueError("duplicate header or end marker")
-    if not palette or palette % 3 or palette > 768 or ending != 0:
-        raise ValueError("palette or end marker is malformed")
-    if not compressed:
-        raise ValueError("poster is missing image data")
-    if kinds.index(b"PLTE") > next(i for i, k in enumerate(kinds) if k == b"IDAT"):
-        raise ValueError("palette follows the image data")
-    # Every scanline has one filter byte and one index per pixel. A bounded
-    # inflate caps memory and catches a truncated or overlong stream.
-    expected = height * (1 + width)
-    inflater = zlib.decompressobj()
-    inflated = inflater.decompress(b"".join(compressed), expected + 1)
-    if (len(inflated) != expected or not inflater.eof
-            or inflater.unconsumed_tail or inflater.unused_data):
+        raise ValueError("duplicate header or end")
+    if not palette or palette % 3 or palette > 768 or not streams:
+        raise ValueError("bad palette or missing image data")
+    if kinds.index(b"PLTE") > kinds.index(b"IDAT"):
+        raise ValueError("palette appears after image data")
+    need = height * (1 + width)
+    flow = zlib.decompressobj()
+    raw = flow.decompress(b"".join(streams), need + 1)
+    if len(raw) != need or not flow.eof or flow.unconsumed_tail or flow.unused_data:
         raise ValueError("image data does not match the header")
+    stride = width + 1
+    for row in range(height):
+        line = raw[row * stride:(row + 1) * stride]
+        if line[0] > 4 or max(line[1:]) >= palette // 3:
+            raise ValueError("bad scanline filter or pixel index")
     return blob
 
 
@@ -66,7 +61,7 @@ def main():
     root = (os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output").strip() or "/output"
     target = Path(root).expanduser() / "entry.png"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(load_poster(SOURCE))
+    target.write_bytes(checked(SOURCE.read_bytes()))
 
 
 if __name__ == "__main__":

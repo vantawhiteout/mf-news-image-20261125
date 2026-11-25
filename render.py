@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: MIT
-"""Offline artwork generator for the Wednesday 25 November 2026 news poster.
+"""Build-time artwork generator for the 25 November 2026 news poster.
 
-Only this build tool needs Pillow. The graded main.py copies the committed PNG
-and imports nothing beyond the Python standard library. Regenerate with
-``python render.py`` from the repository root.
+Pillow is needed only here. The graded main.py uses the standard library and
+copies the committed PNG. Run ``python render.py`` to rebuild entry.png.
 """
-
+import math
 import struct
 import zlib
 from pathlib import Path
@@ -13,20 +12,18 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 SIDE = 1000
-PNG_CAP = 1048576
 PAPER = (247, 244, 235)
 INK = (17, 38, 54)
 CRIMSON = (184, 48, 42)
 OCEAN = (20, 101, 112)
 GOLD = (224, 166, 54)
-STONE = (100, 114, 124)
-WHITE = (255, 255, 255)
 STEEL = (137, 151, 159)
+WHITE = (255, 255, 255)
 FLAME = (215, 92, 38)
-SOFT_BLUE = (230, 238, 243)
-SOFT_SAND = (251, 239, 222)
-SOFT_TEAL = (228, 241, 240)
-SOFT_RED = (250, 234, 229)
+PALE_BLUE = (230, 238, 243)
+PALE_SAND = (251, 239, 222)
+PALE_TEAL = (228, 241, 240)
+PALE_RED = (250, 234, 229)
 
 BOLD = (r"C:\Windows\Fonts\arialbd.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
@@ -34,28 +31,27 @@ DISPLAY = (r"C:\Windows\Fonts\Anton-Regular.ttf", r"C:\Windows\Fonts\impact.ttf"
            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
 
 
-def face(names, points):
+def face(names, size):
     for name in names:
         try:
-            return ImageFont.truetype(name, points)
+            return ImageFont.truetype(name, size)
         except OSError:
             continue
     return ImageFont.load_default()
 
 
-def fit(draw, words, names, points, room):
-    size = points
+def fit(draw, text, names, size, room):
     while size > 12:
         font = face(names, size)
-        if draw.textlength(words, font=font) <= room:
+        if draw.textlength(text, font=font) <= room:
             return font
         size -= 2
     return face(names, 12)
 
 
-def centred(draw, y, words, font, colour, left, right):
-    width = draw.textlength(words, font=font)
-    draw.text(((left + right - width) / 2, y), words, font=font, fill=colour)
+def centred(draw, y, text, font, colour, left, right):
+    width = draw.textlength(text, font=font)
+    draw.text(((left + right - width) / 2, y), text, font=font, fill=colour)
 
 
 def fire(d, x, y, scale=1):
@@ -68,7 +64,7 @@ def fire(d, x, y, scale=1):
                (x - 7 * scale, y - 20 * scale)], fill=GOLD)
 
 
-def drone(d, cx, cy, spread=42, lift=1):
+def drone(d, cx, cy, spread=40):
     d.line((cx - spread, cy - 6, cx + spread, cy - 6), fill=INK, width=6)
     d.line((cx - 12, cy - 6, cx - 4, cy + 10), fill=INK, width=5)
     d.line((cx + 12, cy - 6, cx + 4, cy + 10), fill=INK, width=5)
@@ -80,158 +76,146 @@ def drone(d, cx, cy, spread=42, lift=1):
     d.rectangle((cx - 3, cy + 8, cx + 3, cy + 18), fill=CRIMSON)
 
 
-def waves(d, x0, x1, yy):
-    for row in range(2):
-        y = yy + row * 18
-        for k in range(4):
-            x = x0 + k * 54
-            d.arc((x, y - 12, x + 48, y + 12), 180, 360, fill=OCEAN, width=4)
+def badge(d, x, y, label):
+    d.rounded_rectangle((x, y, x + 62, y + 40), radius=7,
+                        fill=CRIMSON, outline=INK, width=3)
+    centred(d, y + 5, label, face(BOLD, 26), WHITE, x, x + 62)
+
+
+def icon_tariffs(d, box):
+    x, y, xr, _ = box
+    for dx, dy in ((18, 76), (74, 76), (130, 76), (46, 122), (102, 122)):
+        d.rectangle((x + dx, y + dy, x + dx + 44, y + dy + 36),
+                    fill=WHITE, outline=INK, width=3)
+        d.line((x + dx + 22, y + dy, x + dx + 22, y + dy + 36), fill=STEEL, width=2)
+    badge(d, xr - 74, y + 14, "14")
+    line = [(x + 18, y + 172), (x + 62, y + 158), (x + 100, y + 166),
+            (x + 144, y + 140), (xr - 12, y + 154)]
+    d.line(line, fill=CRIMSON, width=8, joint="curve")
+    d.polygon([(xr - 30, y + 144), (xr - 8, y + 152), (xr - 18, y + 170)],
+              fill=CRIMSON)
 
 
 def icon_hormuz(d, box):
     x, y, xr, _ = box
-    waves(d, x + 12, xr - 12, y + 164)
-    d.polygon([(x + 18, y + 104), (xr - 52, y + 104), (xr - 28, y + 132),
-               (x + 18, y + 132)], fill=WHITE, outline=INK)
-    d.rectangle((x + 24, y + 78, x + 116, y + 104), fill=STEEL, outline=INK, width=3)
-    d.rectangle((x + 118, y + 88, x + 142, y + 104), fill=CRIMSON, outline=INK, width=3)
+    for row in range(2):
+        for k in range(4):
+            d.arc((x + 12 + k * 52, y + 158 + row * 18 - 12,
+                   x + 60 + k * 52, y + 158 + row * 18 + 12),
+                  180, 360, fill=OCEAN, width=4)
+    d.polygon([(x + 18, y + 108), (xr - 52, y + 108), (xr - 28, y + 136),
+               (x + 18, y + 136)], fill=WHITE, outline=INK)
+    d.rectangle((x + 24, y + 82, x + 116, y + 108), fill=STEEL, outline=INK, width=3)
+    d.rectangle((x + 118, y + 92, x + 142, y + 108), fill=CRIMSON, outline=INK, width=3)
     for k in range(4):
-        d.rectangle((x + 32 + k * 22, y + 82, x + 44 + k * 22, y + 98), fill=WHITE)
-    fire(d, xr - 56, y + 100, 0.75)
-    mx, my = x + 58, y + 160
+        d.rectangle((x + 32 + k * 22, y + 86, x + 44 + k * 22, y + 102), fill=WHITE)
+    fire(d, xr - 56, y + 104, 0.75)
+    mx, my = x + 56, y + 166
     d.ellipse((mx - 13, my - 13, mx + 13, my + 13), fill=INK)
     for angle in range(0, 360, 45):
-        import math
         dx = 17 * math.cos(math.radians(angle))
         dy = 17 * math.sin(math.radians(angle))
         d.line((mx + dx * 0.7, my + dy * 0.7, mx + dx, my + dy), fill=INK, width=3)
     d.line((mx, my - 35, mx, my - 20), fill=CRIMSON, width=4)
 
 
-def icon_ukraine(d, box):
+def icon_jets(d, box):
     x, y, xr, _ = box
-    for i, radius in enumerate((26, 26)):
-        cx = x + 56 + i * 74
-        d.rectangle((cx - radius, y + 100, cx + radius, y + 162),
-                    fill=STEEL, outline=INK, width=3)
-        d.ellipse((cx - radius, y + 88, cx + radius, y + 112),
-                  fill=WHITE, outline=INK, width=3)
-    d.line((x + 16, y + 168, xr - 16, y + 168), fill=INK, width=4)
-    d.line((x + 96, y + 100, x + 96, y + 168), fill=INK, width=4)
-    fire(d, x + 56, y + 100, 0.85)
-    fire(d, x + 130, y + 100, 0.6)
-    drone(d, x + 104, y + 44, 38)
-
-
-def icon_saudi(d, box):
-    x, y, xr, _ = box
-    d.rectangle((x + 24, y + 154, xr - 20, y + 176), fill=SOFT_SAND)
-    d.rectangle((x + 34, y + 108, x + 78, y + 154), fill=WHITE, outline=INK, width=3)
-    d.rectangle((x + 90, y + 124, x + 148, y + 154), fill=STEEL, outline=INK, width=3)
-    d.rectangle((x + 104, y + 70, x + 118, y + 124), fill=STEEL, outline=INK, width=3)
-    d.ellipse((x + 98, y + 58, x + 124, y + 76), fill=WHITE, outline=INK, width=3)
-    fire(d, x + 111, y + 64, 0.7)
-    drone(d, x + 60, y + 50, 34)
-    d.line((x + 60, y + 66, x + 96, y + 88), fill=CRIMSON, width=4)
-    d.polygon([(x + 96, y + 88), (x + 86, y + 84), (x + 90, y + 96)], fill=CRIMSON)
-
-
-def icon_trade(d, box):
-    x, y, xr, _ = box
-    for row in range(2):
-        for col in range(3):
-            cx = x + 30 + col * 52
-            cy = y + 60 + row * 46
-            d.rectangle((cx, cy, cx + 44, cy + 38), fill=WHITE, outline=INK, width=3)
-            d.line((cx + 6, cy + 6, cx + 38, cy + 6), fill=STEEL, width=2)
-            d.line((cx + 6, cy + 32, cx + 38, cy + 32), fill=STEEL, width=2)
-    d.rounded_rectangle((xr - 76, y + 26, xr - 16, y + 68), radius=6,
-                        fill=CRIMSON, outline=INK, width=3)
-    centred(d, y + 30, "20%", face(BOLD, 27), WHITE, xr - 76, xr - 16)
-    points = [(x + 34, y + 160), (x + 72, y + 148), (x + 106, y + 158),
-              (x + 150, y + 118), (xr - 18, y + 132)]
-    d.line(points, fill=CRIMSON, width=8, joint="curve")
-    d.polygon([(xr - 34, y + 124), (xr - 12, y + 130), (xr - 22, y + 148)],
+    d.rectangle((x + 14, y + 168, xr - 14, y + 180), fill=STEEL)
+    for j in range(2):
+        jx = x + 38 + j * 92
+        d.polygon([(jx, y + 132), (jx + 60, y + 132), (jx + 72, y + 148),
+                   (jx + 60, y + 160), (jx, y + 160), (jx + 12, y + 146)],
+                  fill=WHITE, outline=INK)
+        d.polygon([(jx + 8, y + 132), (jx + 18, y + 112), (jx + 28, y + 132)],
+                  fill=OCEAN, outline=INK)
+    drone(d, x + 110, y + 52, 36)
+    d.line((x + 110, y + 68, x + 92, y + 112), fill=CRIMSON, width=5)
+    d.polygon([(x + 92, y + 112), (x + 82, y + 104), (x + 98, y + 100)],
               fill=CRIMSON)
+    badge(d, xr - 74, y + 12, "5")
+
+
+def icon_heat(d, box):
+    x, y, xr, _ = box
+    d.ellipse((x + 20, y + 54, x + 122, y + 156), fill=OCEAN, outline=INK, width=3)
+    d.polygon([(x + 44, y + 72), (x + 74, y + 64), (x + 86, y + 88),
+               (x + 62, y + 104), (x + 40, y + 96)], fill=GOLD)
+    d.polygon([(x + 78, y + 112), (x + 104, y + 122), (x + 96, y + 148),
+               (x + 66, y + 142)], fill=GOLD)
+    d.rounded_rectangle((x + 144, y + 36, x + 172, y + 138), radius=13,
+                        fill=WHITE, outline=INK, width=3)
+    d.rectangle((x + 153, y + 70, x + 163, y + 138), fill=CRIMSON)
+    d.ellipse((x + 138, y + 122, x + 178, y + 162), fill=CRIMSON, outline=INK, width=3)
+    d.line([(x + 20, y + 174), (x + 72, y + 166), (xr - 12, y + 144)],
+           fill=CRIMSON, width=7, joint="curve")
+    badge(d, xr - 78, y + 4, "2°C")
 
 
 def icon_sudan(d, box):
     x, y, xr, _ = box
-    d.rectangle((x + 12, y + 172, xr - 12, y + 190), fill=SOFT_SAND)
+    d.rectangle((x + 12, y + 174, xr - 12, y + 190), fill=PALE_SAND)
     for i in range(3):
         bx = x + 22 + i * 56
-        d.rectangle((bx, y + 126, bx + 42, y + 172), fill=WHITE, outline=INK, width=3)
-        d.rectangle((bx + 12, y + 144, bx + 26, y + 172), fill=STEEL)
-    d.polygon([(x + 104, y + 126), (x + 148, y + 100), (x + 168, y + 126)],
+        d.rectangle((bx, y + 128, bx + 42, y + 174), fill=WHITE, outline=INK, width=3)
+        d.rectangle((bx + 12, y + 146, bx + 26, y + 174), fill=STEEL)
+    d.polygon([(x + 104, y + 128), (x + 148, y + 102), (x + 168, y + 128)],
               fill=CRIMSON, outline=INK, width=2)
-    drone(d, x + 92, y + 54, 40)
-    d.line((x + 92, y + 72, x + 116, y + 104), fill=CRIMSON, width=4)
-    d.polygon([(x + 116, y + 104), (x + 106, y + 98), (x + 112, y + 112)],
+    drone(d, x + 92, y + 58, 40)
+    d.line((x + 92, y + 74, x + 116, y + 106), fill=CRIMSON, width=4)
+    d.polygon([(x + 116, y + 106), (x + 106, y + 100), (x + 112, y + 114)],
               fill=CRIMSON)
 
 
-def icon_china(d, box):
+def icon_huawei(d, box):
     x, y, xr, _ = box
-    d.rectangle((x + 16, y + 172, xr - 16, y + 182), fill=STEEL)
-    for i, height in enumerate((40, 66, 30, 52)):
-        bx = x + 24 + i * 38
-        d.rectangle((bx, y + 172 - height, bx + 28, y + 172),
-                    fill=WHITE, outline=INK, width=3)
-        for row in range(3):
-            d.rectangle((bx + 5, y + 180 - height + row * 12,
-                         bx + 11, y + 184 - height + row * 12), fill=STEEL)
-    d.line((x + 82, y + 132, x + 82, y + 32), fill=INK, width=5)
-    d.ellipse((x + 68, y + 84, x + 96, y + 112), fill=GOLD, outline=INK, width=3)
-    d.ellipse((x + 72, y + 112, x + 92, y + 130), fill=WHITE, outline=INK, width=3)
-    cx, cy = xr - 52, y + 92
-    d.ellipse((cx - 30, cy - 30, cx + 30, cy + 30), outline=CRIMSON, width=7)
-    d.line((cx + 20, cy + 20, cx + 46, cy + 46), fill=CRIMSON, width=8)
-    centred(d, cy - 22, "?", face(BOLD, 40), CRIMSON, cx - 30, cx + 30)
+    d.rectangle((x + 18, y + 158, xr - 18, y + 174), fill=STEEL)
+    d.rounded_rectangle((x + 72, y + 66, x + 132, y + 104), radius=8,
+                        fill=GOLD, outline=INK, width=3)
+    d.line((x + 102, y + 100, x + 142, y + 156), fill=INK, width=10)
+    d.ellipse((x + 126, y + 150, x + 186, y + 168), fill=WHITE, outline=INK, width=3)
+    d.rectangle((x + 22, y + 92, x + 62, y + 132), fill=PALE_BLUE, outline=INK, width=3)
+    for k in range(3):
+        d.line((x + 28 + k * 12, y + 84, x + 28 + k * 12, y + 92), fill=INK, width=3)
+        d.line((x + 28 + k * 12, y + 132, x + 28 + k * 12, y + 140), fill=INK, width=3)
 
 
 def icon_space(d, box):
     x, y, xr, _ = box
-    d.rectangle((x + 86, y + 104, x + 130, y + 156), fill=WHITE, outline=INK, width=3)
+    d.rectangle((x + 88, y + 104, x + 132, y + 156), fill=WHITE, outline=INK, width=3)
     for dx in (-52, 46):
-        d.rectangle((x + 86 + dx, y + 116, x + 130 + dx, y + 144),
+        d.rectangle((x + 88 + dx, y + 116, x + 132 + dx, y + 144),
                     fill=OCEAN, outline=INK, width=3)
         for k in range(3):
-            d.line((x + 92 + dx + k * 12, y + 116,
-                    x + 92 + dx + k * 12, y + 144), fill=WHITE, width=2)
-    d.line((x + 108, y + 104, x + 108, y + 56), fill=INK, width=4)
-    d.line((x + 108, y + 56, x + 138, y + 56), fill=INK, width=4)
-    d.polygon([(x + 108, y + 56), (x + 80, y + 40), (x + 80, y + 72)], fill=GOLD)
-    rocket_x = x + 42
-    d.polygon([(rocket_x, y + 24), (rocket_x + 16, y + 54),
-               (rocket_x + 16, y + 104), (rocket_x - 16, y + 104),
-               (rocket_x - 16, y + 54)], fill=WHITE, outline=INK)
-    d.ellipse((rocket_x - 16, y + 54, rocket_x + 16, y + 76), fill=OCEAN, outline=INK, width=3)
-    d.polygon([(rocket_x - 16, y + 94), (rocket_x - 34, y + 122),
-               (rocket_x - 16, y + 116)], fill=CRIMSON)
-    d.polygon([(rocket_x + 16, y + 94), (rocket_x + 34, y + 122),
-               (rocket_x + 16, y + 116)], fill=CRIMSON)
-    fire(d, rocket_x, y + 118, 0.55)
+            d.line((x + 94 + dx + k * 12, y + 116,
+                    x + 94 + dx + k * 12, y + 144), fill=WHITE, width=2)
+    d.line((x + 110, y + 104, x + 110, y + 56), fill=INK, width=4)
+    d.line((x + 110, y + 56, x + 140, y + 56), fill=INK, width=4)
+    d.polygon([(x + 110, y + 56), (x + 82, y + 40), (x + 82, y + 72)], fill=GOLD)
+    rx = x + 42
+    d.polygon([(rx, y + 24), (rx + 16, y + 54), (rx + 16, y + 104),
+               (rx - 16, y + 104), (rx - 16, y + 54)], fill=WHITE, outline=INK)
+    d.ellipse((rx - 16, y + 54, rx + 16, y + 76), fill=OCEAN, outline=INK, width=3)
+    d.polygon([(rx - 16, y + 94), (rx - 34, y + 122), (rx - 16, y + 116)], fill=CRIMSON)
+    d.polygon([(rx + 16, y + 94), (rx + 34, y + 122), (rx + 16, y + 116)], fill=CRIMSON)
+    fire(d, rx, y + 118, 0.55)
 
 
 def icon_colombia(d, box):
-    """A supermarket storefront with hostages leaving under police guard."""
     x, y, xr, _ = box
-    # Storefront, striped awning and glass doors.
-    d.rectangle((x + 20, y + 84, xr - 18, y + 160), fill=WHITE, outline=INK, width=3)
+    d.rectangle((x + 20, y + 86, xr - 18, y + 162), fill=WHITE, outline=INK, width=3)
     for k in range(6):
         bx = x + 20 + k * 25
-        d.rectangle((bx, y + 70, bx + 25, y + 86),
+        d.rectangle((bx, y + 72, bx + 25, y + 88),
                     fill=CRIMSON if k % 2 == 0 else WHITE, outline=INK, width=2)
-    d.rectangle((x + 54, y + 106, x + 82, y + 160), fill=SOFT_BLUE, outline=INK, width=2)
-    d.rectangle((x + 108, y + 106, x + 136, y + 160), fill=SOFT_BLUE, outline=INK, width=2)
-    # Three freed people walking clear of the doors.
+    d.rectangle((x + 54, y + 108, x + 82, y + 162), fill=PALE_BLUE, outline=INK, width=2)
+    d.rectangle((x + 108, y + 108, x + 136, y + 162), fill=PALE_BLUE, outline=INK, width=2)
     for k in range(3):
         px = x + 34 + k * 44
-        d.ellipse((px, y + 166, px + 16, y + 182), fill=GOLD, outline=INK, width=2)
-        d.line((px + 8, y + 182, px + 8, y + 196), fill=INK, width=4)
-        d.line((px + 8, y + 196, px + 1, y + 202), fill=INK, width=3)
-        d.line((px + 8, y + 196, px + 15, y + 202), fill=INK, width=3)
-    # Police shield: the rescue was a security operation.
+        d.ellipse((px, y + 168, px + 16, y + 184), fill=GOLD, outline=INK, width=2)
+        d.line((px + 8, y + 184, px + 8, y + 200), fill=INK, width=4)
+        d.line((px + 8, y + 200, px + 1, y + 206), fill=INK, width=3)
+        d.line((px + 8, y + 200, px + 15, y + 206), fill=INK, width=3)
     cx, cy = xr - 40, y + 42
     d.polygon([(cx, cy - 26), (cx + 22, cy - 16), (cx + 22, cy + 8),
                (cx, cy + 26), (cx - 22, cy + 8), (cx - 22, cy - 16)],
@@ -240,107 +224,77 @@ def icon_colombia(d, box):
 
 
 CARDS = [
-    ("HORMUZ", "IRGC: TANKERS HIT MINES", icon_hormuz, CRIMSON, SOFT_BLUE),
-    ("UKRAINE", "KYIV: REFINERIES HIT", icon_ukraine, OCEAN, SOFT_SAND),
-    ("RAS TANURA", "HOUTHIS CLAIM HIT", icon_saudi, CRIMSON, SOFT_SAND),
-    ("US TRADE", "14 PARTNERS; SHARES FALL", icon_trade, OCEAN, SOFT_RED),
-    ("SUDAN", "19 DEAD IN RSF STRIKES", icon_sudan, CRIMSON, SOFT_SAND),
-    ("CHINA", "SHANGHAI CHIEF PROBED", icon_china, OCEAN, SOFT_BLUE),
-    ("SHENZHOU-24", "FIRST PAKISTANI CREW", icon_space, CRIMSON, SOFT_TEAL),
-    ("COLOMBIA", "HOSTAGES FREED", icon_colombia, OCEAN, SOFT_SAND),
+    ("TARIFFS", "14 PARTNERS", "SHARES FALL", icon_tariffs, PALE_RED),
+    ("HORMUZ", "IRAN: TANKER", "HITS A MINE", icon_hormuz, PALE_BLUE),
+    ("UKRAINE", "KYIV: 5 JETS", "HIT AIRFIELD", icon_jets, PALE_SAND),
+    ("CLIMATE", "6 DAYS OVER 2°C", "PRE-INDUSTRIAL", icon_heat, PALE_TEAL),
+    ("SUDAN", "19 DEAD IN", "RSF STRIKES", icon_sudan, PALE_SAND),
+    ("HUAWEI", "US JURY GUILTY", "TRADE SECRETS", icon_huawei, PALE_BLUE),
+    ("SHENZHOU-24", "FIRST PAKISTANI", "ASTRONAUT", icon_space, PALE_TEAL),
+    ("COLOMBIA", "20 HOSTAGES", "RESCUED", icon_colombia, PALE_SAND),
 ]
 
 
 def card(draw, x, y, w, h, entry):
-    headline, detail, pictogram, _, tint = entry
+    title, upper, lower, icon, tint = entry
     draw.rounded_rectangle((x, y, x + w, y + h), radius=11,
                            fill=WHITE, outline=INK, width=3)
-    panel = (x + 8, y + 8, x + w - 8, y + 210)
-    draw.rounded_rectangle(panel, radius=7, fill=tint)
-    pictogram(draw, panel)
-    band = (x + 8, y + 218, x + w - 8, y + h - 8)
-    draw.rounded_rectangle(band, radius=6, fill=INK)
-    top = fit(draw, headline, BOLD, 30, w - 24)
-    bottom = fit(draw, detail, BOLD, 23, w - 24)
-    centred(draw, y + 236, headline, top, WHITE, x + 8, x + w - 8)
-    centred(draw, y + 284, detail, bottom, (224, 237, 244), x + 8, x + w - 8)
+    draw.rounded_rectangle((x + 8, y + 8, x + w - 8, y + 196), radius=7, fill=tint)
+    icon(draw, (x + 8, y + 8, x + w - 8, y + 196))
+    draw.rounded_rectangle((x + 8, y + 204, x + w - 8, y + h - 8), radius=6, fill=INK)
+    centred(draw, y + 214, title, fit(draw, title, BOLD, 36, w - 28),
+            WHITE, x + 8, x + w - 8)
+    centred(draw, y + 264, upper, fit(draw, upper, BOLD, 25, w - 28),
+            (224, 237, 244), x + 8, x + w - 8)
+    centred(draw, y + 296, lower, fit(draw, lower, BOLD, 25, w - 28),
+            (224, 237, 244), x + 8, x + w - 8)
 
 
 def poster():
-    picture = Image.new("RGB", (SIDE, SIDE), PAPER)
-    d = ImageDraw.Draw(picture)
-    d.rectangle((0, 0, SIDE, 9), fill=CRIMSON)
-    d.text((26, 18), "WEDNESDAY  /  WORLD NEWS", font=face(BOLD, 26), fill=OCEAN)
+    image = Image.new("RGB", (SIDE, SIDE), PAPER)
+    d = ImageDraw.Draw(image)
+    d.rectangle((0, 0, SIDE, 10), fill=CRIMSON)
+    d.text((28, 18), "WEDNESDAY  /  WORLD NEWS", font=face(BOLD, 26), fill=OCEAN)
     date = "25 NOVEMBER 2026"
-    d.text((24, 50), date, font=fit(d, date, DISPLAY, 96, SIDE - 48), fill=INK)
-    d.rectangle((26, 160, SIDE - 26, 166), fill=CRIMSON)
-    lead = "IRAN WAR  /  NEW TARIFFS  /  UKRAINE STRIKES  /  SPACE  /  SIEGE ENDS"
-    d.text((26, 174), lead, font=fit(d, lead, BOLD, 21, SIDE - 52), fill=STONE)
-
-    margin, gutter = 24, 10
-    w = (SIDE - 2 * margin - 3 * gutter) // 4
-    h = 348
+    d.text((24, 48), date, font=fit(d, date, DISPLAY, 100, SIDE - 48), fill=INK)
+    d.rectangle((26, 164, SIDE - 26, 170), fill=CRIMSON)
+    lead = "TARIFFS / HORMUZ / UKRAINE / HEAT / SUDAN / HUAWEI / SPACE / RESCUE"
+    d.text((26, 178), lead, font=fit(d, lead, BOLD, 21, SIDE - 52), fill=OCEAN)
+    margin, gutter, w, h = 24, 10, 232, 344
     for index, entry in enumerate(CARDS):
         col, row = index % 4, index // 4
-        card(d, margin + col * (w + gutter), 210 + row * (h + gutter), w, h, entry)
-
-    d.line((26, 922, SIDE - 26, 922), fill=STONE, width=2)
-    source = "FILED 25 NOV 2026  /  REUTERS, AP, AFP, BBC, CNBC, THE GUARDIAN"
-    d.text((26, 932), source, font=fit(d, source, BOLD, 19, SIDE - 52), fill=INK)
-    return picture
-
-
-def png_chunk(kind, data):
-    """Length, type, payload and CRC32: one complete PNG chunk."""
-    return (struct.pack(">I", len(data)) + kind + data
-            + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF))
+        card(d, margin + col * (w + gutter), 214 + row * (h + gutter), w, h, entry)
+    d.line((26, 926, SIDE - 26, 926), fill=STEEL, width=2)
+    source = "FILED 25 NOV 2026  /  BBC  -  GUARDIAN  -  AL JAZEERA  -  CNBC"
+    d.text((26, 938), source, font=fit(d, source, BOLD, 19, SIDE - 52), fill=INK)
+    return image
 
 
-def write_png(picture, target):
-    """Write a paletted PNG with stored DEFLATE blocks and no stray LF bytes.
+def chunk(kind, payload):
+    return (struct.pack(">I", len(payload)) + kind + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF))
 
-    A rotation over palette slots keeps byte 10 out of the pixel indices; the
-    remaining rotations are tried until every CRC is clean too. The result is
-    a complete image well inside the one-megabyte cap and reproducible byte for
-    byte on every run.
-    """
-    indexed = picture.quantize(colors=190, method=Image.Quantize.MEDIANCUT)
-    pixels = indexed.tobytes()
-    palette = indexed.getpalette()[:768]
-    used = sorted(set(pixels))
-    if max(used) >= 191:
-        raise ValueError("poster needs more palette slots than reserved")
-    slots = [i for i in range(191) if i != 10]
-    position = {old: i for i, old in enumerate(used)}
+
+def write_png(image, target):
+    indexed = image.quantize(colors=192, method=Image.Quantize.MEDIANCUT)
+    rows = indexed.tobytes()
+    palette = bytes(indexed.getpalette()[:768])
+    scan = bytearray()
+    for row in range(SIDE):
+        scan.append(0)
+        scan.extend(rows[row * SIDE:(row + 1) * SIDE])
+    packer = zlib.compressobj(level=9, wbits=15)
+    stream = packer.compress(bytes(scan)) + packer.flush()
     header = struct.pack(">IIBBBBB", SIDE, SIDE, 8, 3, 0, 0, 0)
-    for turn in range(len(slots)):
-        lookup = bytearray(256)
-        reverse = {}
-        for old, index in position.items():
-            new = slots[(index + turn) % len(slots)]
-            lookup[old] = new
-            reverse[new] = old
-        colours = bytearray(191 * 3)
-        for slot, old in reverse.items():
-            colours[slot * 3:slot * 3 + 3] = palette[old * 3:old * 3 + 3]
-        scanlines = bytearray()
-        for row in range(SIDE):
-            scanlines.append(0)
-            scanlines.extend(pixels[row * SIDE:(row + 1) * SIDE].translate(lookup))
-        packer = zlib.compressobj(level=0, wbits=15)
-        stream = packer.compress(bytes(scanlines)) + packer.flush()
-        payload = (b"\x89PNG\r\n\x1a\n"
-                   + png_chunk(b"IHDR", header)
-                   + png_chunk(b"PLTE", bytes(colours))
-                   + png_chunk(b"IDAT", stream)
-                   + png_chunk(b"IEND", b""))
-        if len(payload) <= PNG_CAP and payload.count(b"\n") == 2:
-            target.write_bytes(payload)
-            return len(payload)
-    raise RuntimeError("no clean palette rotation found")
+    payload = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header)
+               + chunk(b"PLTE", palette) + chunk(b"IDAT", stream)
+               + chunk(b"IEND", b""))
+    if len(payload) > 1048576:
+        raise ValueError("poster exceeds the one-megabyte cap")
+    target.write_bytes(payload)
+    return len(payload)
 
 
 if __name__ == "__main__":
     destination = Path(__file__).resolve().parent / "entry.png"
-    size = write_png(poster(), destination)
-    print("wrote", destination, size, "bytes")
+    print("wrote", destination, write_png(poster(), destination), "bytes")
