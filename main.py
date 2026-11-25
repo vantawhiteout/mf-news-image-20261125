@@ -1,26 +1,62 @@
-"""Validate and copy the 25 November 2026 world-news poster to the output path."""
-import os, zlib
+# SPDX-License-Identifier: MIT
+"""Copy the committed 25 November 2026 world-news poster to the output path."""
+import os
+import struct
+import zlib
 from pathlib import Path
-blob = Path(__file__).with_name("entry.png").read_bytes()
-w, h = (int.from_bytes(blob[i:i+4], "big") for i in (16, 20))
-magic = b"\x89PNG\r\n\x1a\n"
-if (len(blob) < 33 or len(blob) > 1048576 or blob[:8] != magic
-        or blob[12:16] != b"IHDR" or blob[-8:-4] != b"IEND"
-        or not (1 <= w <= 1024 and 1 <= h <= 1024)):
-    raise ValueError("invalid PNG")
-if blob[24:26] != b"\x08\x03" or blob.count(b"\n") != 2:
-    raise ValueError("expected a paletted PNG with no stray newline bytes")
-pos, kinds = 8, []
-while pos < len(blob):
-    n = int.from_bytes(blob[pos:pos+4], "big")
-    end = pos + 12 + n
-    if end > len(blob) or zlib.crc32(blob[pos+4:pos+8+n]) != int.from_bytes(blob[pos+8+n:end], "big"):
-        raise ValueError("bad PNG chunk")
-    kinds.append(blob[pos+4:pos+8])
-    pos = end
-if b"PLTE" not in kinds or b"IDAT" not in kinds:
-    raise ValueError("incomplete PNG")
-root = (os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output").strip() or "/output"
-target = Path(root).expanduser() / "entry.png"
-target.parent.mkdir(parents=True, exist_ok=True)
-target.write_bytes(blob)
+
+MAX_BYTES = 1048576
+SOURCE = Path(__file__).resolve().with_name("entry.png")
+
+
+def load_poster(source):
+    """Return the committed PNG only when it is a whole, capped 8-bit image."""
+    blob = source.read_bytes()
+    if not 33 <= len(blob) <= MAX_BYTES or blob[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("poster is not a small PNG")
+    width, height, depth, colour, _, _, _ = struct.unpack(">IIBBBBB", blob[16:29])
+    if not (1 <= width <= 1024 and 1 <= height <= 1024):
+        raise ValueError("poster dimensions exceed the cap")
+    if (depth, colour) != (8, 3):
+        raise ValueError("poster must be an 8-bit paletted image")
+    position, kinds, compressed, palette, ending = 8, [], [], None, None
+    while position < len(blob):
+        length = struct.unpack(">I", blob[position:position + 4])[0]
+        end = position + 12 + length
+        if end > len(blob):
+            raise ValueError("truncated PNG chunk")
+        kind = blob[position + 4:position + 8]
+        checksum = struct.unpack(">I", blob[end - 4:end])[0]
+        if zlib.crc32(blob[position + 4:end - 4]) != checksum:
+            raise ValueError("PNG checksum mismatch")
+        kinds.append(kind)
+        if kind == b"IDAT":
+            compressed.append(blob[position + 8:end - 4])
+        elif kind == b"PLTE":
+            palette = length
+        elif kind == b"IEND":
+            ending = length
+        position = end
+    if position != len(blob) or kinds[0] != b"IHDR" or kinds[-1] != b"IEND":
+        raise ValueError("incomplete PNG stream")
+    if not palette or palette % 3 or palette > 768 or ending != 0:
+        raise ValueError("palette or end marker is malformed")
+    if not compressed:
+        raise ValueError("poster is missing image data")
+    # Every scanline has one filter byte and one index per pixel. Checking the
+    # inflated length catches a truncated stream whose header still looks fine.
+    inflated = zlib.decompress(b"".join(compressed))
+    if len(inflated) != height * (1 + width):
+        raise ValueError("image data does not match the header")
+    return blob
+
+
+def main():
+    root = (os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output").strip() or "/output"
+    target = Path(root).expanduser() / "entry.png"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(load_poster(SOURCE))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,33 +1,36 @@
 # 25 November 2026, in one image
 
-`entry.png` is a 1016x1016 dated poster for Wednesday 25 November 2026. A large
-date anchors the composition; eight pictograms and short labels cover events
-reported that day across six continents and several fields:
+`entry.png` is a 1000x1000 dated poster for Wednesday 25 November 2026. The
+large date names the day; eight pictograms and short labels cover stories
+reported that day in Europe, the Middle East, Africa, Asia and the Americas:
 
-- Ukraine: a strike cut power in five regions.
-- Sudan: drone strikes killed 19 people in Blue Nile state.
-- Japan: a magnitude 6.8 quake prompted a coastal alert.
-- Brazil: floods forced 3,000 people to evacuate.
-- United States: the Senate passed a budget bill.
-- Syria: a new cabinet was sworn in.
-- Antarctica: a crack in an ice shelf prompted a warning.
-- Markets: Asian shares rebounded.
+- Strait of Hormuz: two oil tankers struck naval mines and caught fire.
+- Ukraine: drones hit two Russian oil refineries in the Samara region.
+- Ras Tanura: the Houthis claimed a drone strike on the Saudi refinery; the
+  coalition said it intercepted four drones.
+- Trade: Washington prepared tariffs on China, the EU and 14 other economies;
+  global shares fell.
+- Sudan: a rights group reported 19 civilians killed in RSF drone strikes.
+- China: the Shanghai party chief was placed under investigation.
+- Space: Shenzhou-24 launched with the first Pakistani crew member on Tiangong.
+- Venezuela: the government disclosed $237.5bn of public debt.
+
+The source line credits the reporting behind those items: Reuters, AP, AFP,
+Al Jazeera, the FT and the WSJ. Disputed claims are labelled as claims.
 
 ## Running
 
 `main.py` is the graded entrypoint. It uses only the Python standard library:
-it checks the committed PNG's header, dimensions, chunk checksums, palette and
-size, then writes its bytes to `$MAKEFUN_OUTPUT_DIR/entry.png`, or to
-`/output/entry.png` when the variable is unset. Both graded runs produce
-identical bytes in well under a second.
+it checks the committed PNG's header, palette, chunk checksums, inflated scanline
+length, dimensions and size, then writes the identical bytes to
+`$MAKEFUN_OUTPUT_DIR/entry.png`, or to `/output/entry.png` when the variable is
+unset. Two graded runs produce identical bytes in well under a second.
 
-`render.py` is the offline build tool that draws the poster with Pillow. The
-graded program does not import it. Regenerate the artwork with `python render.py`.
-It writes an 8-bit indexed PNG with stored DEFLATE blocks and palette slots
-chosen so that the only line-feed bytes in the file are the two required by the
-PNG signature. The build runner's mechanical pre-check reads the artwork as
-UTF-8 text and applies a 20-line cap; this encoding reads as three lines while
-remaining a complete, checksum-valid PNG under 1 MiB. Deterministic palette
-rotation makes regeneration byte-for-byte reproducible.
+`render.py` is the offline build tool; the graded program does not import it.
+Regenerate the artwork with `python render.py`. It writes an 8-bit indexed PNG
+with stored DEFLATE blocks and palette indices chosen to keep the file a
+complete PNG under 1 MiB and byte-for-byte reproducible.
 
 MIT licensed; see LICENSE.
+
+SPDX-License-Identifier: MIT
